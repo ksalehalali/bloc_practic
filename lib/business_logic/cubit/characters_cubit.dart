@@ -3,6 +3,8 @@ import 'package:bloc_practic/data/models/characters.dart';
 import 'package:bloc_practic/data/repos/characters_repo.dart';
 import 'package:meta/meta.dart';
 
+import '../../data/models/char-quotes.dart';
+
 part 'characters_state.dart';
 
 class CharactersCubit extends Cubit<CharactersState> {
@@ -12,10 +14,19 @@ class CharactersCubit extends Cubit<CharactersState> {
 
   List<Character> getAllCharacters() {
     charactersRepo.getAllCharacters().then((characters) {
-      return emit(CharactersLoaded(characters));
+      emit(CharactersLoaded(characters));
       this.myCharacters = characters;
     });
 
     return myCharacters;
   }
+
+  void getQuotes(String charName) {
+    charactersRepo.getAllCharQuotes(charName).then((quotes) {
+       emit(QuotesLoaded(quotes));
+
+    });
+  }
+
+
 }

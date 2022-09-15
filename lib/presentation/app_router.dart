@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../constants/strings.dart';
+import '../data/models/characters.dart';
 import 'screens/character_details.dart';
 
 class AppRouter {
@@ -16,6 +17,7 @@ class AppRouter {
     charactersRepo = CharactersRepo(CharactersWebServices());
     charactersCubit = CharactersCubit(charactersRepo);
   }
+
   Route? generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case charactersScreen:
@@ -27,7 +29,14 @@ class AppRouter {
         );
 
       case characterDetailsScreen:
-        return MaterialPageRoute(builder: (_) => CaracterDetailsScreen());
+        final character = settings.arguments as Character;
+        return MaterialPageRoute(
+            builder: (_) => BlocProvider(
+                create: (BuildContext context) =>
+                    CharactersCubit(charactersRepo),
+                child: CaracterDetailsScreen(
+                  character: character,
+                )));
     }
   }
 }
