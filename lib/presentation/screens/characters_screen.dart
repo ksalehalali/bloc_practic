@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:bloc_practic/business_logic/cubit/characters_cubit.dart';
 import 'package:bloc_practic/constants/my_colors.dart';
 import 'package:bloc_practic/presentation/widgets/character_item.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_offline/flutter_offline.dart';
 
 import '../../data/models/characters.dart';
 
@@ -142,11 +146,36 @@ class _CharactersScreenState extends State<CharactersScreen> {
     );
   }
 
+  Widget _buildNoEnternetWidget() {
+    return Center(child:Container(
+      color: MyColors.myWhite,
+      child: Column(
+        children: [
+          SizedBox(height: 30),
+          Text('Can\'nt connect ... check internet',style: TextStyle(
+            fontSize: 22,
+            color: MyColors.myGrey
+          ),),
+          Image.asset('assets/images/undraw_access_denied_re_awnf.png',fit: BoxFit.cover,)
+        ],
+      ),
+    ));
+  }
+  late StreamSubscription streamSubscription;
+  var isDeviceConnected = false;
+  bool isAlertSet= false;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     BlocProvider.of<CharactersCubit>(context).getAllCharacters();
+  }
+
+  getConnectivity() {
+    streamSubscription =Connectivity().onConnectivityChanged.listen((event) {
+
+    });
   }
 
   @override
@@ -160,7 +189,22 @@ class _CharactersScreenState extends State<CharactersScreen> {
         title: _isSearching?_buildSearchField():_buildAppBarTitles(),
         actions: _buildAppBarActions(),
       ),
-      body: buildBlocWidget(),
+      body:OfflineBuilder(
+      connectivityBuilder: (
+      BuildContext context,
+      ConnectivityResult connectivity,
+      Widget child,
+    ) {
+      final bool connected = connectivity != ConnectivityResult.none;
+      if(connected) {
+    return  buildBlocWidget();
+
+    }else {
+        return _buildNoEnternetWidget();
+      }
+      },
+
+        child:CircularProgressIndicator.adaptive() ,),
     );
   }
 }
