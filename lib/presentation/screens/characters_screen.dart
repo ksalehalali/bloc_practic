@@ -4,9 +4,11 @@ import 'package:bloc_practic/business_logic/cubit/characters_cubit.dart';
 import 'package:bloc_practic/constants/my_colors.dart';
 import 'package:bloc_practic/presentation/widgets/character_item.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_offline/flutter_offline.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 import '../../data/models/characters.dart';
 
@@ -161,23 +163,57 @@ class _CharactersScreenState extends State<CharactersScreen> {
       ),
     ));
   }
-  late StreamSubscription streamSubscription;
-  var isDeviceConnected = false;
-  bool isAlertSet= false;
+  late StreamSubscription subscription;
+  bool isDeviceConnected = false;
+  bool isAlertSet = false;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     BlocProvider.of<CharactersCubit>(context).getAllCharacters();
+    getConnectivity();
   }
 
-  getConnectivity() {
-    streamSubscription =Connectivity().onConnectivityChanged.listen((event) {
-
-    });
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
   }
 
+  getConnectivity() =>
+      subscription = Connectivity().onConnectivityChanged.listen(
+            (ConnectivityResult result) async {
+          isDeviceConnected = await InternetConnectionChecker().hasConnection;
+          if (!isDeviceConnected && isAlertSet == false) {
+            showDialogBox();
+            setState(() => isAlertSet = true);
+          }
+        },
+      );
+
+  showDialogBox() => showCupertinoDialog<String>(
+    context: context,
+    builder: (BuildContext context) => CupertinoAlertDialog(
+      title: const Text('No Connection'),
+      content: const Text('Please check your internet connectivity'),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context, 'Cancel');
+            setState(() => isAlertSet = false);
+            isDeviceConnected =
+            await InternetConnectionChecker().hasConnection;
+            if (!isDeviceConnected && isAlertSet == false) {
+              showDialogBox();
+              setState(() => isAlertSet = true);
+            }
+          },
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
